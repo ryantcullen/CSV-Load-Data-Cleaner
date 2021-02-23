@@ -43,6 +43,7 @@ with open('All Intervals Meter #1010078552.csv') as readFile:
                 if(minutes - previous_minutes > 15):
                     # Calculate the number of missing rows
                     missing_rows = int((minutes - previous_minutes)/15) - 1
+
                     # Loop to insert missing rows
                     for i in range(missing_rows):
                         # Calculate what the missing rows should be
@@ -52,13 +53,14 @@ with open('All Intervals Meter #1010078552.csv') as readFile:
                         toAdd = [datetime[:-5].strip() + ' ' + missingTime, float(newRows[line_count - 260][1])]
                         newRows.append(toAdd)
                         print("Added row: {}".format(toAdd))
+
                     print("Location of missing entries: {}".format(line_count))
                 
                 # Add the current row to the new list of rows
                 newRow = [datetime, row["interval_kWh"]]
                 newRows.append(newRow)
             
-            # Set 'True' if we have reached the end of the desired year period
+            # Set 'True' if we have reached the end of the year
             if datetime == end:
                 found_end = True
     
