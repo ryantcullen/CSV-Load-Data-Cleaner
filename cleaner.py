@@ -58,15 +58,19 @@ with open('All Intervals Meter #1010078552.csv') as readFile:
                 newRow = [datetime, row["interval_kWh"]]
                 newRows.append(newRow)
             
+            # Set 'True' if we have reached the end of the desired year period
             if datetime == end:
                 found_end = True
-        
+    
+    # Report on the number of orignial rows processed, and the new number of rows after cleaning
     print("Processed: {} rows".format(line_count))
     print("Length of new file: {} rows".format(len(newRows) - 1))
 
+# Write to the new file
 with open("clean " + meterid + ".csv", 'w', newline='') as writeFile:
     writer = csv.writer(writeFile)
     writer.writerows(newRows)
 
+# Close both files
 readFile.close()
 writeFile.close()
