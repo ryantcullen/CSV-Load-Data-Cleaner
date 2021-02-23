@@ -39,19 +39,22 @@ with open('All Intervals Meter #1010078552.csv') as readFile:
             if found_end == False:
                 line_count += 1
                 
+                # Check for missing rows (TODO: doesn't work if last interval of the day is the one missing)
                 if(minutes - previous_minutes > 15):
+                    # Calculate the number of missing rows
                     missing_rows = int((minutes - previous_minutes)/15) - 1
+                    # Loop to insert missing rows
                     for i in range(missing_rows):
-
+                        # Calculate what the missing rows should be
                         neededMins = minutes - (missing_rows - i)*15
                         missingTime = '{:02d}:{:02d}'.format(*divmod(neededMins, 60))
-                        
+                        # TODO: doesn't work if missing row is index is <260
                         toAdd = [datetime[:-5].strip() + ' ' + missingTime, float(newRows[line_count - 260][1])]
                         newRows.append(toAdd)
                         print("Added row: {}".format(toAdd))
                     print("Location of missing entries: {}".format(line_count))
                 
-                # Add the ro
+                # Add the row to the new list of rows
                 newRow = [datetime, row["interval_kWh"]]
                 newRows.append(newRow)
 
