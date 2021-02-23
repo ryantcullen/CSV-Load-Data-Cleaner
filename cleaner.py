@@ -4,6 +4,21 @@ import csv
 start = "01/01/2019 00:00"
 end = "12/31/2019 23:45"
 meterid = "#1010078552"
+newRows = []
+
+def InsertRow(missing_rows):
+    # Loop to insert missing rows
+    for i in range(missing_rows):
+        # Calculate what the missing rows should be
+        neededMins = minutes - (missing_rows - i)*15
+        missingTime = '{:02d}:{:02d}'.format(*divmod(neededMins, 60))
+        # Create the new row to add (TODO: doesn't work if missing row is index is <260
+        toAdd = [datetime[:-5].strip() + ' ' + missingTime, float(newRows[line_count - 260][1])]
+        newRows.append(toAdd)
+        print("Added row: {}".format(toAdd))
+
+    # Report the index of added missing entries in the new file
+    print("Location of added entries: {}".format(line_count))
 
 # Open the file to read from it
 with open('All Intervals Meter #1010078552.csv') as readFile:
@@ -14,7 +29,6 @@ with open('All Intervals Meter #1010078552.csv') as readFile:
     found_start = False
     found_end = False
     datetime = start
-    newRows = []
 
     # Loop through each row in the file
     for row in reversed(list(csv_reader)):
@@ -38,23 +52,17 @@ with open('All Intervals Meter #1010078552.csv') as readFile:
             # Keep iterating until we have found the end of the year
             if found_end == False:
                 line_count += 1
+
+                # Edge case: missing rows during transition to new day
+                if(minutes - previous_minutes < 0):
+                    x = 1
                 
                 # Check for missing rows (TODO: doesn't work if last interval of the day is the one missing)
                 if(minutes - previous_minutes > 15):
                     # Calculate the number of missing rows
                     missing_rows = int((minutes - previous_minutes)/15) - 1
-
-                    # Loop to insert missing rows
-                    for i in range(missing_rows):
-                        # Calculate what the missing rows should be
-                        neededMins = minutes - (missing_rows - i)*15
-                        missingTime = '{:02d}:{:02d}'.format(*divmod(neededMins, 60))
-                        # Create the new row to add (TODO: doesn't work if missing row is index is <260
-                        toAdd = [datetime[:-5].strip() + ' ' + missingTime, float(newRows[line_count - 260][1])]
-                        newRows.append(toAdd)
-                        print("Added row: {}".format(toAdd))
-
-                    print("Location of missing entries: {}".format(line_count))
+                    # Insert the missing rows
+                    InsertRow(missing_rows)
                 
                 # Add the current row to the new list of rows
                 newRow = [datetime, row["interval_kWh"]]
