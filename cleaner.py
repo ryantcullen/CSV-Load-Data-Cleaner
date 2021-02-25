@@ -1,34 +1,45 @@
 import csv
+from datetime import datetime
+from datetime import timedelta 
+
+datetime_fmt = '%m/%d/%Y %H:%M'
+
+def ToDateTime(datetime_str):
+    return datetime.strptime(datetime_str, datetime_fmt)
 
 # The start and end of the year
-start = "01/01/2019 00:00"
-end = "12/31/2019 23:45"
-meterid = "#1010078552"
+start = ToDateTime("1/1/2019 0:00")
+end = ToDateTime("12/31/2019 23:45")
+
+meterid = "#1010078549"
 newRows = []
 
-def InsertRow(missing_rows):
+def InsertRows(missing_rows):
     # Loop to insert missing rows
     for i in range(missing_rows):
         # Calculate what the missing rows should be
-        neededMins = minutes - (missing_rows - i)*15
-        missingTime = '{:02d}:{:02d}'.format(*divmod(neededMins, 60))
+        missing_datetime = (previous_datetime + (i+1)*timedelta(minutes=15)).strftime(datetime_fmt)
         # Create the new row to add (TODO: doesn't work if missing row is index is <260
-        toAdd = [datetime[:-5].strip() + ' ' + missingTime, float(newRows[line_count - 260][1])]
+        toAdd = [str(missing_datetime), float(newRows[line_count - 260 + i][1])]
+        print("Added row: " + str(toAdd))
         newRows.append(toAdd)
-        print("Added row: {}".format(toAdd))
 
-    # Report the index of added missing entries in the new file
-    print("Location of added entries: {}".format(line_count))
+    # Report the index of added missing rows in the new file
+    print("Added {} rows".format(missing_rows))
+    print("Location of added rows: {}".format(line_count))
+    print('---')
+
+
 
 # Open the file to read from it
-with open('All Intervals Meter #1010078552.csv') as readFile:
+with open('All Intervals Meter ' + meterid + '.csv') as readFile:
 
     # Initialize reader as a dictionary and set initial values
     csv_reader = csv.DictReader(readFile)
     line_count = 0
     found_start = False
     found_end = False
-    datetime = start
+    current_datetime = start
 
     # Loop through each row in the file
     for row in reversed(list(csv_reader)):
@@ -37,39 +48,35 @@ with open('All Intervals Meter #1010078552.csv') as readFile:
             newRows.append(["interval_start", "interval_kWh"])
 
         # Store values for current and previous dates/times
-        previous_datetime = datetime
-        datetime = row["interval_start"]
-        time = datetime[-5:]
-        previous_time = previous_datetime[-5:]
-        minutes = int(time[:-3]) * 60 + int(time[-2:])
-        previous_minutes = int(previous_time[:-3]) * 60 + int(previous_time[-2:])
+        previous_datetime = current_datetime
+        current_datetime = ToDateTime(row["interval_start"])
+
+        previous_minutes = int((previous_datetime - start).total_seconds()/60)
+        current_minutes = int((current_datetime - start).total_seconds()/60)
 
         # Start cleaning when we have found the start of the year
-        if datetime == start:
+        if current_datetime == start:
             found_start = True
         
         if found_start:
             # Keep iterating until we have found the end of the year
             if found_end == False:
                 line_count += 1
+                minute_difference = current_minutes - previous_minutes
 
-                # Edge case: missing rows during transition to new day
-                if(minutes - previous_minutes < 0):
-                    x = 1
+
+                # Check if there is missing rows
+                if(minute_difference > 15):
+                    missing_rows = int((minute_difference/15) - 1)
+                    InsertRows(missing_rows)
                 
-                # Check for missing rows (TODO: doesn't work if last interval of the day is the one missing)
-                if(minutes - previous_minutes > 15):
-                    # Calculate the number of missing rows
-                    missing_rows = int((minutes - previous_minutes)/15) - 1
-                    # Insert the missing rows
-                    InsertRow(missing_rows)
-                
-                # Add the current row to the new list of rows
-                newRow = [datetime, row["interval_kWh"]]
-                newRows.append(newRow)
+                # Add the current row to the new list of rows (if not a duplicate)
+                if(minute_difference != 0):
+                    newRow = [current_datetime, row["interval_kWh"]]
+                    newRows.append(newRow)
             
             # Set 'True' if we have reached the end of the year
-            if datetime == end:
+            if current_datetime == end:
                 found_end = True
     
     # Report on the number of orignial rows processed, and the new number of rows after cleaning
