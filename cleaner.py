@@ -19,6 +19,7 @@ def InsertRows(missing_rows):
     for i in range(missing_rows):
         # Calculate what the missing rows should be
         missing_datetime = (previous_datetime + (i+1)*timedelta(minutes=15)).strftime(datetime_fmt)
+        
         # Create the new row to add (TODO: doesn't work if missing row is index is <260
         toAdd = [str(missing_datetime), float(newRows[line_count - 260 + i][1])]
         print("Added row: " + str(toAdd))
@@ -33,7 +34,6 @@ def InsertRows(missing_rows):
 
 # Open the file to read from it
 with open('All Intervals Meter ' + meterid + '.csv') as readFile:
-
     # Initialize reader as a dictionary and set initial values
     csv_reader = csv.DictReader(readFile)
     line_count = 0
