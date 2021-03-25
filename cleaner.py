@@ -8,7 +8,7 @@ def ToDateTime(datetime_str):
     return datetime.strptime(datetime_str, datetime_fmt)
 
 # The start and end of the year
-start = ToDateTime("1/1/2019 0:00")
+start = ToDateTime("1/1/2019 00:00")
 end = ToDateTime("12/31/2019 23:45")
 
 meterid = "#1010078549"
@@ -19,7 +19,6 @@ def InsertRows(missing_rows):
     for i in range(missing_rows):
         # Calculate what the missing rows should be
         missing_datetime = (previous_datetime + (i+1)*timedelta(minutes=15)).strftime(datetime_fmt)
-        
         # Create the new row to add (TODO: doesn't work if missing row is index is <260
         toAdd = [str(missing_datetime), float(newRows[line_count - 260 + i][1])]
         print("Added row: " + str(toAdd))
@@ -63,10 +62,10 @@ with open('All Intervals Meter ' + meterid + '.csv') as readFile:
             if found_end == False:
                 line_count += 1
                 minute_difference = current_minutes - previous_minutes
-
-
+                
                 # Check if there is missing rows
                 if(minute_difference > 15):
+                    # Add missing rows
                     missing_rows = int((minute_difference/15) - 1)
                     InsertRows(missing_rows)
                 
@@ -74,6 +73,15 @@ with open('All Intervals Meter ' + meterid + '.csv') as readFile:
                 if(minute_difference != 0):
                     newRow = [current_datetime, row["interval_kWh"]]
                     newRows.append(newRow)
+                else:
+                    print("Removed row: {}".format([row["interval_start"], row["interval_kWh"]]))
+                    line_count -= 1
+
+                # Check if zero load
+                if(row["interval_kWh"] == 0):
+                    # Enter load value from the same interval fromt he previous day
+                    row["interval_kWh"] = float(newRows[line_count - 260 + i][1])
+
             
             # Set 'True' if we have reached the end of the year
             if current_datetime == end:
